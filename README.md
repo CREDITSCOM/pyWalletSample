@@ -6,10 +6,10 @@ Connection is made only when you use the command-buttons, such as Submit, Check 
 
 To make this application to work you should install Python 3.7 or higher and the following libraries:
 
-*import 
-*base58check
-*math
-*hashlib
-*ed25519
-*time
-*PySimpleGUI
+* import 
+* base58check
+* math
+* hashlib
+* ed25519
+* time
+* PySimpleGUI
