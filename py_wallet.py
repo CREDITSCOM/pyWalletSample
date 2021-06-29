@@ -80,12 +80,7 @@ except:
     without_dict = True
 
 if not without_dict:
-    try:
-        node_dict_ = json.load(node_dict_file)
-    except:
-        sg.Popup('Warning', 'Node dictionary file can\'t be processed. Try to correct it. Now proceed without it.')
-        without_dict = True
-
+    node_dict_ = json.load(node_dict_file)
 
 for it in node_dict_:
     hex_data = bytes.fromhex(it)
@@ -768,7 +763,11 @@ def getUserContracts(sKey):
     client = m_client()
     if client == None:
         return None
-    res = client.SmartContractsListGet(sKey,0, 50)
+    try:
+        res = client.SmartContractsListGet(sKey,0, 50)
+    except:
+        sg.Popup("Contract list get exception")
+        res = None
     client.close()
     return res
 
@@ -1301,6 +1300,8 @@ while True:                             # The Event Loop
         lst = []
         if values['all_contracts']:
             allContracts = getUserContracts(sourceKey)
+            if(allContracts == None):
+                continue
             if len(allContracts.smartContractsList) == 0:
                 continue
             for a in allContracts.smartContractsList:
@@ -1308,7 +1309,7 @@ while True:                             # The Event Loop
         else:
             if values['name_find_contract'] !='':
                 contract = getContract(values['name_find_contract'])
-                if contract.smartContract == None or contract.smartContract.address == '' :
+                if contract == None or contract.smartContract == None or contract.smartContract.address == '' :
                     continue   
                 lst.append(str(base58check.b58encode(contract.smartContract.address if type(contract.smartContract.address)!=str else contract.smartContract.address.encode())).split('\'')[1])
             else:
@@ -1432,21 +1433,22 @@ while True:                             # The Event Loop
                 contractText = normalizeCode(contractText)
                 result = compile(contractText)
                 print(result.status.message)
-                if "Success" not in result.status.message:
-                    sg.Popup('Info','Contract can\'t be build correctly. Check it more careflly')
-                    continue
-                if len(result.byteCodeObjects) == 0:
-                    sg.Popup('Info','Contract can\'t be build correctly. Check it more careflly')
-                    continue
-                else:
-                    win_contracts.FindElement('build_contract').Update(disabled=True)
-                    win_contracts.FindElement('deploy_contract').Update(disabled=False)
-                    win_contracts.FindElement('deploy_fee').Update(disabled=False)
-                    win_contracts.FindElement('times_deploy').Update(disabled=False)
-                    win_contracts.FindElement('deploy_multiple').Update(disabled=False)
-                    contract.smartContractDeploy.byteCodeObjects = result.byteCodeObjects
-                    contract.smartContractDeploy.sourceCode = contractText
-                    sg.Popup('Info','Contract is built Sucessfully.\nYou can fill in fee box and deploy it.') 
+                if(result != None):
+                    if "Success" not in result.status.message:
+                        sg.Popup('Info','Contract can\'t be build correctly. Check it more careflly')
+                        continue
+                    if len(result.byteCodeObjects) == 0:
+                        sg.Popup('Info','Contract can\'t be build correctly. Check it more careflly')
+                        continue
+                    else:
+                        win_contracts.FindElement('build_contract').Update(disabled=True)
+                        win_contracts.FindElement('deploy_contract').Update(disabled=False)
+                        win_contracts.FindElement('deploy_fee').Update(disabled=False)
+                        win_contracts.FindElement('times_deploy').Update(disabled=False)
+                        win_contracts.FindElement('deploy_multiple').Update(disabled=False)
+                        contract.smartContractDeploy.byteCodeObjects = result.byteCodeObjects
+                        contract.smartContractDeploy.sourceCode = contractText
+                        sg.Popup('Info','Contract is built Sucessfully.\nYou can fill in fee box and deploy it.') 
 
     if event in ('contract_parameters'):
         tmp = values['value_input_method']
@@ -1480,11 +1482,11 @@ while True:                             # The Event Loop
                             if paramType == 'String':
                                 curParam['String'] = paramVal
                                 typeSet = True
-                            if paramType == 'int':
+                            if paramType == 'int' or paramType == 'Integer':
                                 curParam['int'] = int(paramVal)
                                 typeSet = True
-                            if paramType == 'bool':
-                                curParam['bool'] = bool(paramVal)
+                            if paramType == 'boolean':
+                                curParam['boolean'] = bool(paramVal)
                                 typeSet = True
                             if paramType == 'int':
                                 curParam['int'] = float(paramVal)
